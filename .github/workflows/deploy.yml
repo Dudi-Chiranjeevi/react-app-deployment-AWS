@@ -1,0 +1,63 @@
+name: ECR Build, Push, and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+    
+      - name: Set build number
+        id: set_build_number
+        run: echo "::set-output name=BUILD_NUMBER::${GITHUB_RUN_NUMBER}"
+
+      - name: Login to Amazon ECR
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 195275671647.dkr.ecr.ap-south-1.amazonaws.com
+
+      - name: Build Docker image
+        run: |
+          docker build -t crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }} .
+      
+      - name: Tag Docker image for ECR
+        run: |
+          docker tag crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }} 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
+
+      - name: Push Docker image to Amazon ECR
+        run: |
+          docker push 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
+
+  deploy:
+    name: Deploy Docker Image
+    runs-on: self-hosted
+    needs: build
+    steps:
+      - name: Set build number
+        id: set_build_number
+        run: echo "::set-output name=BUILD_NUMBER::${GITHUB_RUN_NUMBER}"
+      
+      - name: Login to Amazon ECR
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 195275671647.dkr.ecr.ap-south-1.amazonaws.com
+
+      - name: Pull Docker image from Docker Hub
+        run: |
+          docker pull 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
+    
+      - name: Stop and remove existing container
+        run: |
+          docker stop crypto_app || true && docker rm crypto_app || true
+    
+      - name: Run Docker container
+        run: |
+          docker run -d -p 3000:3000 --name crypto_app 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
