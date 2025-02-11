@@ -56,8 +56,7 @@ jobs:
 
       - name: Stop and remove existing container (if any)
         run: |
-          docker stop crypto_app || true
-          docker rm crypto_app || true
+          docker stop crypto_app || true && docker rm crypto_app || true
         
       - name: Run Docker container
         run: |
