@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: Linux
     steps:
 
       - name: Checkout repository
@@ -37,7 +37,7 @@ jobs:
 
   deploy:
     name: Deploy Docker Image
-    runs-on: self-hosted
+    runs-on: Linux
     needs: build
     steps:
       - name: Set build number
