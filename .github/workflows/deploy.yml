@@ -54,6 +54,11 @@ jobs:
         run: |
           docker pull 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
 
+      - name: Stop and remove existing container (if any)
+        run: |
+          docker stop crypto_app || true
+          docker rm crypto_app || true
+        
       - name: Run Docker container
         run: |
           docker run -d -p 3000:3000 --name crypto_app 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
