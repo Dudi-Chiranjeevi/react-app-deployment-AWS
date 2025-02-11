@@ -12,10 +12,6 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
-    
-      - name: Set build number
-        id: set_build_number
-        run: echo "::set-output name=BUILD_NUMBER::${GITHUB_RUN_NUMBER}"
 
       - name: Login to Amazon ECR
         run: |
@@ -25,25 +21,21 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }} .
+          docker build -t crypto_app:latest .
       
       - name: Tag Docker image for ECR
         run: |
-          docker tag crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }} 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
+          docker tag crypto_app:latest 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:latest
 
       - name: Push Docker image to Amazon ECR
         run: |
-          docker push 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
+          docker push 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:latest
 
   deploy:
     name: Deploy Docker Image
     runs-on: self-hosted
     needs: build
     steps:
-      - name: Set build number
-        id: set_build_number
-        run: echo "::set-output name=BUILD_NUMBER::${GITHUB_RUN_NUMBER}"
-      
       - name: Login to Amazon ECR
         run: |
           aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -52,7 +44,7 @@ jobs:
 
       - name: Pull Docker image from Docker Hub
         run: |
-          docker pull 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
+          docker pull 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:latest
 
       - name: Stop and remove existing container (if any)
         run: |
@@ -61,5 +53,4 @@ jobs:
         
       - name: Run Docker container
         run: |
-          docker run -d -p 3000:3000 --name crypto_app 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:${{ steps.set_build_number.outputs.BUILD_NUMBER }}
-          
+          docker run -d -p 3000:3000 --name crypto_app 195275671647.dkr.ecr.ap-south-1.amazonaws.com/crypto_app:latest
