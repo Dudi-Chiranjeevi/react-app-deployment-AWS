@@ -1,13 +1,13 @@
-# Use a lightweight Node.js image for building
+# Use a minimal base image
 FROM node:18-alpine AS build
 
 # Set working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and package-lock.json to leverage Docker caching
+# Copy package.json and package-lock.json first (for efficient caching)
 COPY package*.json ./
 
-# Install only production dependencies
+# Install production dependencies only
 RUN npm install --omit=dev
 
 # Copy the rest of the application
@@ -22,16 +22,14 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /usr/src/app
 
-# Copy only necessary files from the build stage
-COPY --from=build /usr/src/app/package.json ./
-COPY --from=build /usr/src/app/node_modules ./node_modules
-COPY --from=build /usr/src/app/build ./build
+# Copy only the necessary build files from the previous stage
+COPY --from=build /usr/src/app/build /usr/src/app/build
 
-# Set environment to production
-ENV NODE_ENV=production
+# Install a lightweight HTTP server to serve the built React app
+RUN npm install -g serve
 
 # Expose port 3000
 EXPOSE 3000
 
-# Serve the React app using a lightweight HTTP server
-CMD ["npx", "serve", "-s", "build", "-l", "3000"]
+# Start the server
+CMD ["serve", "-s", "build", "-l", "3000"]
