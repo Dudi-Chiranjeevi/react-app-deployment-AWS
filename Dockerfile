@@ -4,15 +4,14 @@ FROM node:18-alpine AS build
 # Set working directory
 WORKDIR /app
 
-# Ensure required tools are installed
+# Install required tools
 RUN apk add --no-cache bash
 
-# Copy package files first for caching
+# Copy package files first for better caching
 COPY package.json package-lock.json ./
 
 # Set NPM to allow unsafe operations
 ENV NPM_CONFIG_UNSAFE_PERM=true
-ENV NODE_OPTIONS="--max-old-space-size=1024"
 
 # Install dependencies with fallback
 RUN npm ci || npm install --legacy-peer-deps
@@ -20,10 +19,11 @@ RUN npm ci || npm install --legacy-peer-deps
 # Copy the rest of the application
 COPY . .
 
-# Ensure correct permissions
-RUN chmod -R 777 /app
+# Ensure the build directory exists
+RUN mkdir -p /app/build
 
 # Build the React app
+ENV PUBLIC_URL=/
 RUN npm run build
 
 # Use a lightweight production image
