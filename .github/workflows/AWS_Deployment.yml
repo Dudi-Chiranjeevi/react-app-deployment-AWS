@@ -1,4 +1,4 @@
-name: Deploy to AWS EC2
+name: Deploy to AWS EC2 by ECR
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  Checkout_and_Scan:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout Repository
@@ -17,6 +17,13 @@ jobs:
       env:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+
+  Configuring_logging_Pushing_Image:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
 
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v2
@@ -38,7 +45,10 @@ jobs:
     - name: Push Docker Image to ECR
       run: |
         docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}:latest
-
+  
+  Deployment:
+    runs-on: ubuntu-latest
+    steps:
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.10
       with:
