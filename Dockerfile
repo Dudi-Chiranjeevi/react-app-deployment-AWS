@@ -45,3 +45,6 @@ EXPOSE 3000
 
 # Start the React app
 CMD ["serve", "-s", "build", "-l", "3000"]
+
+
+
