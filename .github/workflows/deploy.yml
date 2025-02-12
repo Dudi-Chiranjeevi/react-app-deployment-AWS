@@ -42,10 +42,17 @@ jobs:
           -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
           -Dsonar.sources=src
           -Dsonar.tests=src
-          -Dsonar.exclusions=**/node_modules/**,**/*.test.js,**/*.spec.js
-          -Dsonar.test.inclusions=**/*.test.js,**/*.spec.js
           -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
           -Dsonar.qualitygate.wait=true
+      
+    - name: SonarQube Quality Gate check
+      id: sonarqube-quality-gate-check
+      uses: sonarsource/sonarqube-quality-gate-action@master
+      timeout-minutes: 5
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      
 
   deploy:
     runs-on: ubuntu-latest
