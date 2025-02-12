@@ -10,7 +10,7 @@ RUN apk add --no-cache bash
 # Copy package files first for caching
 COPY package.json package-lock.json ./
 
-# Set NPM to allow unsafe operations
+# Set NPM to allow unsafe operations-- Sets an environment variable for npm to bypass permission errors.
 ENV NPM_CONFIG_UNSAFE_PERM=true
 
 # Install dependencies with fallback
