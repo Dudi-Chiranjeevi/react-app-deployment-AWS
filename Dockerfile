@@ -4,21 +4,17 @@ FROM node:18-alpine AS build
 # Set working directory
 WORKDIR /app
 
-# Copy package.json and package-lock.json first to leverage caching
+# Copy package files first for caching
 COPY package.json package-lock.json ./
 
-# Install dependencies
-RUN npm ci
+# Fix for potential permission issues
+RUN npm config set unsafe-perm true
 
-# Copy the rest of the application
+# Install dependencies with fallback
+RUN npm ci || npm install --legacy-peer-deps
+
+# Copy the rest of the app
 COPY . .
-
-# Set environment variables (if required)
-ARG NODE_ENV=production
-ENV NODE_ENV=$NODE_ENV
-
-# Remove old build if it exists (optional, for safety)
-RUN rm -rf build
 
 # Build the React app
 RUN npm run build
@@ -29,16 +25,16 @@ FROM node:18-alpine
 # Set working directory
 WORKDIR /app
 
-# Copy only the necessary files from the build stage
+# Copy built app
 COPY --from=build /app/build /app/build
 COPY --from=build /app/package.json /app/
 COPY --from=build /app/node_modules /app/node_modules
 
-# Install a lightweight HTTP server to serve static files
+# Install a lightweight HTTP server
 RUN npm install -g serve
 
 # Expose the application port
 EXPOSE 3000
 
-# Start the React app in production mode
+# Start the React app
 CMD ["serve", "-s", "build", "-l", "3000"]
