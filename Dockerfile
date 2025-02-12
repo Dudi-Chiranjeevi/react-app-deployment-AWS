@@ -4,16 +4,19 @@ FROM node:18-alpine AS build
 # Set working directory
 WORKDIR /app
 
+# Ensure required tools are installed
+RUN apk add --no-cache bash
+
 # Copy package files first for caching
 COPY package.json package-lock.json ./
 
-# Fix for potential permission issues
-RUN npm config set unsafe-perm true
+# Set NPM to allow unsafe operations
+ENV NPM_CONFIG_UNSAFE_PERM=true
 
 # Install dependencies with fallback
 RUN npm ci || npm install --legacy-peer-deps
 
-# Copy the rest of the app
+# Copy the rest of the application
 COPY . .
 
 # Build the React app
@@ -38,3 +41,4 @@ EXPOSE 3000
 
 # Start the React app
 CMD ["serve", "-s", "build", "-l", "3000"]
+
