@@ -6,6 +6,46 @@ on:
       - main
 
 jobs:
+  
+  sonar:
+    name: SonarQube Scan & Code Coverage
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Set Up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: Run Tests & Generate Coverage Report
+      run: npm test -- --coverage --watchAll=false
+
+    - name: Upload Coverage Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report
+        path: coverage
+
+    - name: SonarQube Scan
+      uses: SonarSource/sonarcloud-github-action@v2
+      env:
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      with:
+        args: >
+          -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+          -Dsonar.host.url=${{ secrets.SONAR_HOST_URL }}
+          -Dsonar.sources=src
+          -Dsonar.tests=src
+          -Dsonar.exclusions=**/node_modules/**,**/*.test.js,**/*.spec.js
+          -Dsonar.test.inclusions=**/*.test.js,**/*.spec.js
+          -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
   deploy:
     runs-on: ubuntu-latest
     steps:
