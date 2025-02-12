@@ -1,35 +1,47 @@
-# Use a minimal base image
+# Use a base image with Node.js installed
 FROM node:18-alpine AS build
 
 # Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package.json and package-lock.json first (for efficient caching)
-COPY package*.json ./
+# Ensure required tools are installed
+RUN apk add --no-cache bash
 
-# Install production dependencies only
-RUN npm install --omit=dev
+# Copy package files first for caching
+COPY package.json package-lock.json ./
+
+# Set NPM to allow unsafe operations
+ENV NPM_CONFIG_UNSAFE_PERM=true
+ENV NODE_OPTIONS="--max-old-space-size=1024"
+
+# Install dependencies with fallback
+RUN npm ci || npm install --legacy-peer-deps
 
 # Copy the rest of the application
 COPY . .
 
+# Ensure correct permissions
+RUN chmod -R 777 /app
+
 # Build the React app
 RUN npm run build
 
-# Use a smaller production base image
+# Use a lightweight production image
 FROM node:18-alpine
 
 # Set working directory
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy only the necessary build files from the previous stage
-COPY --from=build /usr/src/app/build /usr/src/app/build
+# Copy built app
+COPY --from=build /app/build /app/build
+COPY --from=build /app/package.json /app/
+COPY --from=build /app/node_modules /app/node_modules
 
-# Install a lightweight HTTP server to serve the built React app
+# Install a lightweight HTTP server
 RUN npm install -g serve
 
-# Expose port 3000
+# Expose the application port
 EXPOSE 3000
 
-# Start the server
+# Start the React app
 CMD ["serve", "-s", "build", "-l", "3000"]
