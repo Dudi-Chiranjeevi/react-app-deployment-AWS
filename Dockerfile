@@ -26,7 +26,7 @@ COPY --from=builder /usr/src/app/build ./build
 
 # Install only production dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN npm install --omit=dev
 
 # Expose port 3000
 EXPOSE 3000
