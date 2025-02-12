@@ -40,5 +40,5 @@ RUN npm install -g serve
 EXPOSE 3000
 
 # Start the React app
-CMD ["serve", "-s", "build", "-l", "3000"]
+CMD ["npm", "start"]
 
